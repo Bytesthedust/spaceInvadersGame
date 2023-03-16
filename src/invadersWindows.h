@@ -2,6 +2,6 @@
 
 #pragma once
 
-void initialize_curses(void);
+void initialize_curses();
 
 void create_window(WINDOW ** window, int height, int width, int y, int x);
