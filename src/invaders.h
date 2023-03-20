@@ -15,8 +15,8 @@
 #define WIN_MENU_X 30
 
 //game window dimensions
-#define WIN_GAME_HEIGHT 20
-#define WIN_GAME_WIDTH 25
+#define WIN_GAME_HEIGHT 20 * 2
+#define WIN_GAME_WIDTH 25 * 4
 #define WIN_GAME_Y 12
 #define WIN_GAME_X 30
 
