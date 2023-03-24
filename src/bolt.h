@@ -3,11 +3,6 @@
 #include <ncurses.h>
 #include "drawable.hpp"
 
-enum Direction
-{
-	up;
-  down;
-}
 
 class Bolt: public Drawable
 {
@@ -18,4 +13,16 @@ class Bolt: public Drawable
 			this->x = x;
 			this->icon = '*';
 		}
+
+		void setY(int newY)
+		{
+			y = newY;
+		}
+
+		void setX(int newX)
+		{
+			x = newX;
+		}
+
+			
 };
