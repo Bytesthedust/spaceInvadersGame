@@ -12,7 +12,7 @@
 #include "invadersScore.hpp"
 #include "lives.hpp"
 #include "bolt.hpp"
-
+#include "shield.hpp"
 class invadersGame
 {
 	public:
@@ -42,7 +42,14 @@ class invadersGame
 			lives = 3;
 			livesBoard.initialize(lives);
 		
+			//initializes ship sprite
 			createShip(SHIP_Y,SHIP_X);
+
+			//initializes shield sprites
+			//createShields(0,4);
+
+
+			//create aliens
 
 		}
 
@@ -53,28 +60,31 @@ class invadersGame
 
 			switch(input)
 			{
+				//player presses left arrow key to move left
 				case KEY_LEFT:
-					//action
-					//ship.setDirection(left);
 					moveShip(left);
 					break;
 
+				//player presses right arrow key to move right
 				case KEY_RIGHT:
-					//ship.setDirection(right);
 					moveShip(right);
 					break;
 
-				//NOTE: case for spacebar (shoot bolt)
+				//player presses spacebar to shoot bolt
 
 				case ' ':
 					createBolt(ship->getY()-1, ship->getX());
+					moveBolt();
 					break;
 
+				//player presses p key to pause/unpause game
 				case 'p':
-					//enable pausing of the game
 					board.setTimeout(-1);
 					while(board.getInput() != 'p');
 					board.setTimeout(1000);
+					break;
+				case 'd':
+					ship->getPosition(); //dev command. REMOVE when project is finished
 					break;
 			}
 		}
@@ -83,11 +93,7 @@ class invadersGame
 		void updateState()
 		{
 			//logic for animation
-			
-			bolt.clear();
  
-			
-
 		}
 
 		void redraw()
@@ -115,10 +121,11 @@ class invadersGame
 	private:
 		Board board;
 		bool game_over;
-		bool isDestroyed; //boolean to check if object has been destroyed
+		
 		Ship* ship; //class for ship 
 		Empty* space; //class for empty space
 		Bolt* bolt; //class for bullet
+		Shield* shield; //class for shield object
 
 		Scoreboard scoreboard;
 		int score;
@@ -126,7 +133,9 @@ class invadersGame
 		Lives livesBoard;
 		int lives;
 
-		
+
+	
+		//helper functions	
 		void createShip(int y, int x)
 		{
 			ship = new Ship(y, x);
@@ -156,12 +165,13 @@ class invadersGame
 			switch(d)
 			{
 				case left:
-					if(ship_col>1)
-					     ship->setX(--ship_col);
+					if(ship_col>1) 
+						ship->setX(--ship_col);
 					break;
 
 				case right:
-					ship->setX(ship_col++);
+					if(ship_col < 73)
+						ship->setX(ship_col++);
 					break;
 				default:
 					break;
@@ -180,21 +190,52 @@ class invadersGame
 
 			bolt = new Bolt(y, x);
 			board.add(*bolt);
-			//moveBolt();
 		}
 
-		//NOTE: Bolt not moving
+		//NOTE: Bolt not moving-> when bolt fires, freezes ship
 		void moveBolt()
 		{
 			int bolt_col = bolt->getX();
 			int bolt_row = bolt->getY();
-			while(1)
+		
+			int next_y = bolt_row;
+
+			int tick = 0;
+			while(tick < 27)
 			{
-				bolt->setY(--ship->getY());
+				//board.clear(); //NOTE: clears whole screen but leaves bolt
+				createBolt(next_y, bolt_col);
+				board.refresh();
+
+				next_y = next_y - 1;
+				tick += 1;
+
+			}
+
+			/*while(board.getCharAt(bolt->getY(), bolt->getX()) != '#')
+			{
+				//NOTE: Use getCharAt to check if bolt is in a non empty space
+				bolt->setY(--bolt_row);
 				board.clear();
 				createBolt(bolt->getY(), bolt_col);
+			}*/
+		}
+
+		//function to create 2 rows of shields
+		void createShields(int startY, int startX)
+		{
+			for(startY; startY < 2; startY++)
+			{
+				for(startX; startX < 4; startX++)
+				{
+					shield->push(startY, startX, &shield);
+					board.add(*shield);
+					
+				}
 			}
 		}
+
+
 
 
 };
