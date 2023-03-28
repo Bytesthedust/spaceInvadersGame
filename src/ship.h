@@ -13,34 +13,25 @@ enum Direction
 	right
 };
 
-class Sprite: public Drawable
+
+class Ship: public Drawable
 {
+	Direction cur_direction;
+	bool isDestroyed;
 	public:
-		Sprite()
+		Ship()
 		{
-			this->x = this->y = 0;
+			this->x=this->y=0;
 			this->icon = '^';
 		}
 
-		Sprite(int y, int x)
+		Ship(int y, int x)
 		{
 			this->x = x;
 			this->y = y;
 			this->icon = '^';
 		}
 
-};
-
-
-class Ship: Sprite
-{
-	Sprite shipSprite;
-	Direction cur_direction;
-	public:
-		Ship()
-		{
-			cur_direction = right;
-		}
 
 		Direction getDirection()
 		{
@@ -52,25 +43,38 @@ class Ship: Sprite
 			cur_direction = d;
 		}
 
-		//shootBolt method: spawn in front of ship. While bolt is in empty space, continue forward. If bolt hits non-empty space, destroy object and bolt
-
-		Sprite move()
+		void setY(int newY)
 		{
-			int row = shipSprite.getY();
-			int col = shipSprite.getX();
+			y = newY;
+		}
 
-			switch(cur_direction)
+		void setX(int newX)
+		{
+			if(newX <= WIN_GAME_WIDTH)
+				
 			{
-				case left:
-					col--;
-					break;
-				case right:
-					row--;
-					break;
-				default:
-					break;
+				this->x = newX;
+			}
+			
+			else if(newX <=73)
+			{
+				this->x = newX;
 			}
 
-			return Sprite(row, col);
+			else
+			{
+				x = 10;
+			}
+			//x = newX<=10?10:newX;
 		}
+
+		//development method. REMOVE when FINISHED
+		void getPosition()
+		{
+			std::cout <<"Y: " << y <<"X: " << x << std::endl;
+		}
+
+		//shootBolt method: spawn in front of ship. While bolt is in empty space, continue forward. If bolt hits non-empty space, destroy object and bolt
+
+		
 };
