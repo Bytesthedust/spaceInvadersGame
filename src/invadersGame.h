@@ -1,4 +1,4 @@
-//function for game logic
+//functions for game logic
 
 #pragma once
 
@@ -46,7 +46,7 @@ class invadersGame
 			createShip(SHIP_Y,SHIP_X);
 
 			//initializes shield sprites
-			//createShields(0,4);
+			createShields(25,4);
 
 
 			//create aliens
@@ -74,7 +74,7 @@ class invadersGame
 
 				case ' ':
 					createBolt(ship->getY()-1, ship->getX());
-					moveBolt();
+					moveBolt(bolt->getY());
 					break;
 
 				//player presses p key to pause/unpause game
@@ -125,7 +125,7 @@ class invadersGame
 		Ship* ship; //class for ship 
 		Empty* space; //class for empty space
 		Bolt* bolt; //class for bullet
-		Shield* shield; //class for shield object
+		Shield* shield[2][4]; //class for shield object
 
 		Scoreboard scoreboard;
 		int score;
@@ -193,43 +193,36 @@ class invadersGame
 		}
 
 		//NOTE: Bolt not moving-> when bolt fires, freezes ship
-		void moveBolt()
+		void moveBolt(int next_y)
 		{
 			int bolt_col = bolt->getX();
-			int bolt_row = bolt->getY();
-		
-			int next_y = bolt_row;
+			//int next_y = bolt_row-1;
 
-			int tick = 0;
-			while(tick < 27)
+			while(next_y > 0)
 			{
-				//board.clear(); //NOTE: clears whole screen but leaves bolt
+
+				board.clear(); //NOTE: board.clear() clears whole screen but leaves bolt
+
+
+			//find math function used to randomize attacks
+				bolt->setY(next_y);
 				createBolt(next_y, bolt_col);
-				board.refresh();
-
-				next_y = next_y - 1;
-				tick += 1;
-
+				next_y -= 1;
 			}
 
-			/*while(board.getCharAt(bolt->getY(), bolt->getX()) != '#')
-			{
-				//NOTE: Use getCharAt to check if bolt is in a non empty space
-				bolt->setY(--bolt_row);
-				board.clear();
-				createBolt(bolt->getY(), bolt_col);
-			}*/
+			
 		}
 
 		//function to create 2 rows of shields
 		void createShields(int startY, int startX)
 		{
-			for(startY; startY < 2; startY++)
+			for(startY; startY < sizeof(shield); startY++)
 			{
 				for(startX; startX < 4; startX++)
 				{
-					shield->push(startY, startX, &shield);
-					board.add(*shield);
+					*shield[startY, startX] = new Shield(startY, startX);
+					board.add(**shield[startY, startX]);
+					board.refresh();
 					
 				}
 			}
