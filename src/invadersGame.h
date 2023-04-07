@@ -3,6 +3,7 @@
 #pragma once
 
 #include <ncurses.h>
+#include <unistd.h>
 
 #include "invadersBoard.hpp"
 #include "drawable.hpp"
@@ -73,8 +74,8 @@ class invadersGame
 				//player presses spacebar to shoot bolt
 
 				case ' ':
-					createBolt(ship->getY()-1, ship->getX());
-					moveBolt(bolt->getY());
+					createBolt(ship->getY()-1, ship->getX()); //initial position of the bolt in front of the ship
+					moveBolt();
 					break;
 
 				//player presses p key to pause/unpause game
@@ -133,6 +134,7 @@ class invadersGame
 		Lives livesBoard;
 		int lives;
 
+		//NOTE: find math function to randomize alien attacks
 
 	
 		//helper functions	
@@ -140,13 +142,6 @@ class invadersGame
 		{
 			ship = new Ship(y, x);
 			board.add(*ship);
-		}
-
-		void destroyShip(int y, int x)
-		{
-			delete ship;
-			space = new Empty(y, x);
-			board.add(*space);
 		}
 
 
@@ -192,38 +187,45 @@ class invadersGame
 			board.add(*bolt);
 		}
 
-		//NOTE: Bolt not moving-> when bolt fires, freezes ship
-		void moveBolt(int next_y)
+		//BUG: when bolt fires, freezes ship in place
+		void moveBolt()
 		{
+			//get the coordinates of the bolt
 			int bolt_col = bolt->getX();
-			//int next_y = bolt_row-1;
 
-			while(next_y > 0)
+			int next_y = bolt->getY();
+
+			//animating bolt movement
+			for(next_y; next_y > 0; --next_y) //NOTE: ADD conditions if a collision with an alien or shield occurs
 			{
 
-				board.clear(); //NOTE: board.clear() clears whole screen but leaves bolt
+				board.addAt(bolt->getY(), bolt->getX(), ' '); //create an empty space in the bolt old position
+				bolt->setY(next_y); //set the new coordinate for bolt
+				createBolt(next_y, bolt_col); //create a new bolt given the updated coordinates
+				
+				board.refresh(); //refresh window to show bolt
+				usleep(80000); //pause execution for 80000 miliseconds or 0.08 seconds. This simulates "flipping" to the next frame in the animation
 
-
-			//find math function used to randomize attacks
-				bolt->setY(next_y);
-				createBolt(next_y, bolt_col);
-				next_y -= 1;
 			}
 
-			
+			if(next_y <= 0) //erase bolt if it reaches the border
+			{
+				board.addAt(bolt->getY(), bolt->getX(), ' ');
+			}
+
+
 		}
 
 		//function to create 2 rows of shields
+		//NOTE: Shields are not appearing
 		void createShields(int startY, int startX)
 		{
-			for(startY; startY < sizeof(shield); startY++)
+			for(startY; startY < sizeof(shield); ++startY)
 			{
-				for(startX; startX < 4; startX++)
+				for(startX; startX < 4; ++startX)
 				{
 					*shield[startY, startX] = new Shield(startY, startX);
 					board.add(**shield[startY, startX]);
-					board.refresh();
-					
 				}
 			}
 		}
