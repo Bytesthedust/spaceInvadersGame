@@ -7,46 +7,27 @@
 class Shield: public Drawable
 {
 	public:
-		Shield* head;
-		Shield* next;
-		bool isDestroyed;
 
+		Shield* next;
+		bool isHead;
 
 		Shield(int y, int x)
 		{
 			this->y=y;
 			this->x=x;
 			this->icon = '#';
-			isDestroyed = false;
-			next = NULL;
-
 		}
 
-		void setY(int newY)
-		{
-			y=newY;
-		}
-
-		void setX(int newX)
-		{
-			x=newX;
-		}
-
-		void setStatus(int check)
-		{
-			if(check == 0)
-				isDestroyed = false;
-			else if(check == 1)
-				isDestroyed = true;
-			else
-				isDestroyed;
-		}
+		
+		//add new shield to list
 
 		void push(int y, int x, Shield** head)
 		{
-			Shield* newShield = new Shield(y, x);
+			Shield* newShield = new Shield(y,x);
 			Shield* temp = *head;
-			
+
+			newShield->next = NULL;
+
 			if(*head == NULL)
 			{
 				*head = newShield;
@@ -60,7 +41,61 @@ class Shield: public Drawable
 
 			temp->next = newShield;
 			return;
-
 		}
+
+		Shield* deleteHead(Shield* head)
+		{
+			if(head == NULL)
+				return NULL;
+
+			Shield* temp = head;
+			head = head->next;
+
+			delete temp;
+			return head;
+		}
+
+		Shield* deleteTail(Shield* head)
+		{
+			if(head == NULL)
+				return NULL;
+			if(head->next = NULL)
+			{
+				delete head;
+				return NULL;
+			}
+
+			Shield* second_last = head;
+			while(second_last->next->next != NULL)
+				second_last = second_last->next;
+
+			delete(second_last);
+
+			second_last->next = NULL;
+			return head;
+		}
+
+		/*
+		Shield* removeNode(Shield** head)
+		{
+			Shield* temp = *head;
+			while(temp->next != NULL)
+			{
+				if(temp->getIcon() == ' ')
+				{
+*/
+
+		/*
+		void deleteGivenNode(Shield** head, int y, int x)
+		{
+			if(*head == NULL)
+				return;
+
+			Shield* temp = *head;
+
+			if(
+
+		*/
+
 
 };
