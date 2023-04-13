@@ -1,4 +1,5 @@
 //class to create player character and additional characters
+#pragma once
 
 class Drawable
 {
@@ -27,10 +28,23 @@ class Drawable
 			return y;
 		}
 
+		void setY(int newY)
+		{
+			if(newY > 0 && newY < 30)
+				y = newY;
+		}
+
+		void setX(int newX)
+		{
+			if(newX > 1 && newX < 73)
+				x = newX;
+		}
+
 		chtype getIcon() //return icon character
 		{
 			return icon;
 		}
+
 
 	protected:
 		int y, x;
