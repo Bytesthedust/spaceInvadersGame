@@ -5,6 +5,7 @@
 #include <ncurses.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <ctime>
 
 #include "invadersBoard.hpp"
 #include "drawable.hpp"
@@ -36,7 +37,7 @@ class invadersGame
 
 		void initialize()
 		{
-			board.initialize();
+			board.initialize(); //create game board
 			score = 0;
 			scoreboard.initialize(score);
 
@@ -48,32 +49,30 @@ class invadersGame
 			createShip(SHIP_Y,SHIP_X);
 
 			//initializes shield sprites
-			//first shields
 			
-			createShields(4);
+			//first shields
 			createShields(4);
 
 			//second shields
 			createShields(20);
-			createShields(20);
 			
 			//third shields
 			createShields(36);
-			createShields(36);
 
 			//fourth shields
-			createShields(52);
 			createShields(52);
 			
 			displayShields(&shield);
 
 			//create aliens
-			createAlien(3, 6, 'A');//first row
-					       //second row
-					       //third row
-					       //fourth row
-			moveAliens(); //begin alien movement
+			createAlien(3, 6, 'A'); //first row
+			createAlien(5, 6, 'O'); //second row
+			createAlien(7, 6, 'G'); //third row
+			createAlien(9, 6, 'X'); //fourth row
 
+
+			displayAliens(&alien);
+			//moveAlien(); //begin alien movement
 
 		}
 
@@ -107,9 +106,7 @@ class invadersGame
 					while(board.getInput() != 'p');
 					board.setTimeout(1000);
 					break;
-				case 'd':
-					ship->getPosition(); //dev command. REMOVE when project is finished
-					break;
+
 			}
 		}
 
@@ -143,7 +140,16 @@ class invadersGame
 		}
 
 		//checks for game over conditions
-		//void endgame();
+		bool endgame()
+		{
+			if(lives == 0)
+			{
+				game_over = true;
+			}
+
+			return game_over;
+		}
+
 
 	private:
 		Board board;
@@ -154,7 +160,8 @@ class invadersGame
 		Bolt* bolt = NULL; //class for bullet
 		Bolt* a_bolt = NULL; //class for alien bullet
 		Shield* shield = NULL; //class for shield object
-		Alien* alien;
+		
+		Alien* alien = NULL;
 
 		Scoreboard scoreboard;
 		int score;
@@ -164,16 +171,15 @@ class invadersGame
 
 		//game logic functions
 
-
-		//NOTE: find math function to randomize alien attacks
-		//NOTE: because shields are linked lists, delete them the linked list way
-
 		//SPRITE CREATION
-
 		void createAlien(int y, int x, chtype icon)
 		{
-			alien = new Alien(y,x,icon);
-			board.add(*alien);
+
+			int rowLimit = x + 6;
+			for(x; x < rowLimit; ++x)
+			{
+				alien->push(y,x,icon,&alien);
+			}
 
 		}
 
@@ -202,14 +208,11 @@ class invadersGame
 		
 			int rowlimit = startX + 8;
 
-
-
 			for(startX; startX < rowlimit; ++startX)
 			{
 				shield->push(25, startX, &shield);
 				shield->push(26, startX, &shield);
 			}
-
 
 		}
 
@@ -222,9 +225,25 @@ class invadersGame
 				board.refresh();
 				temp = temp->next;
 			}
+			board.add(*temp);
+			board.refresh();
 		}
 
-		
+		void displayAliens(Alien** head)
+		{
+			Alien* temp = *head;
+			while(temp->next != NULL)
+			{
+				board.add(*temp);
+				board.refresh();
+				temp = temp->next;
+			}
+
+			board.add(*temp);
+			board.refresh();
+		}
+
+	
 
 		//SPRITE DESTRUCTION
 		//when collision occurs, destroy bolt and sprite
@@ -233,13 +252,17 @@ class invadersGame
 			board.addAt(y, x, ' '); //destroy bolt
 			board.addAt(next_y, x, ' '); //destroy sprite
 		}
-		
-		void destroyAlien(Alien** head, int y, int x);
-		
-		void destroyShip();
-		
-		void destroyShield(Shield** head, int y, int x); //work on first
 
+		//ship takes damage 
+		void shipHit()
+		{
+			board.addAt(ship->getY(), ship->getX(), ' ');
+			delete(ship);
+			lives -= 1; //player loses a life
+			livesBoard.updateLives(lives);
+			createShip(SHIP_Y, SHIP_X); //respawn ship at default location
+		}
+		
 
 		//SPRITE MOVEMENT
 		//function to change position of ship icon
@@ -317,7 +340,7 @@ class invadersGame
 				else if(ahead == 'A' || ahead == 'O' || ahead == 'G' || ahead=='X')
 				{
 					destroySprite(bolt->getY(), bolt->getX(), next_y);
-					score += alien->getValue();
+					score += alien->getValue(ahead);
 					scoreboard.updateScore(score);
 					delete(bolt);
 					break;
@@ -346,29 +369,91 @@ class invadersGame
 
 		}
 		
-		
+		//handles all mechanics for alien enemies
+		void moveAlien()
+		{
+			//get position of alien
+			int alien_col = alien->getX();
+			int alien_row = alien->getY();
+			int direction = 0; //flag to determine alien direction
+			
+			srand(time(0)); //seed for shoot variable random value
+
+			int shoot; // flag for shooting
+			
+			//begin movement
+			while(alien_row < 29)
+			{
+				shoot = rand() % 2;
+				//implement player movement
+
+				if(direction ==  0) //move right
+				{
+					alien_col += 1;
+					if(alien_col > 73)
+					{
+						alien_col -= 1;
+						alien_row += 1;
+						direction = 1;
+					}
+
+					//add shoot mechanic
+					if(shoot == 1)
+						moveAlienBolt();
+				}
+
+				else if(direction == 1) // move left
+				{
+					alien_col -= 1;
+					if(alien_col < 1)
+					{
+						alien_col += 1;
+						alien_row += 1;
+						direction = 0;
+					}
+
+					//add shoot mechanic
+					if(shoot == 1)
+						moveAlienBolt();
+				}
+
+				//animation
+				board.addAt(alien->getY(), alien->getX(), ' ');
+				createAlien(alien_row, alien_col, 'A'); //change to get icon of alien
+				board.refresh();
+				usleep(800000);
+
+
+			}
+
+
+		}
+
 		void moveAlienBolt()
 		{
 			//get the coordinates of the bolt
 			createAlienBolt(alien->getY()+1, alien->getX());
 
 			int bolt_col = a_bolt->getX();
-
 			int next_y = a_bolt->getY();
 
 
 			//animating bolt movement
-
 			for(next_y; next_y > 0; ++next_y)
 			{
 				chtype ahead = board.getCharAt(next_y, bolt_col); //detect incoming sprite
 				chtype input = board.getInput();
 
+				/*
 				//allows movement during bolt travel
 				if(input == KEY_LEFT)
 					moveShip(left);
 				if(input == KEY_RIGHT)
 					moveShip(right);
+					*/
+
+				//processInput();
+
 
 				//collision detection
 
@@ -383,10 +468,9 @@ class invadersGame
 				//if bolt hits player
 				else if(ahead == '^')//NOTE: Crash occurs
 				{
-					destroySprite(a_bolt->getY(), a_bolt->getX(), next_y);
-					lives -= 1;
-					livesBoard.updateLives(lives);
+					board.addAt(a_bolt->getY(), a_bolt->getX(), ' ');
 					delete(a_bolt);
+					shipHit();
 					break;
 				}
 
@@ -395,84 +479,20 @@ class invadersGame
 
 					//else bolt continues to the border
 					board.addAt(a_bolt->getY(), a_bolt->getX(), ' '); //create an empty space in the bolt old position
-					delete(a_bolt); //memory management of bolt
+					delete(a_bolt); //memory management of bolt	
 					createAlienBolt(next_y, bolt_col); //create a new bolt given the updated coordinates
-					if(next_y > 29)
-					{
-						board.addAt(a_bolt->getY(), a_bolt->getX(), ' ');
-						delete(a_bolt);
-						break;
-					}
+				
 				}
 				board.refresh(); //refresh window to show bolt
 				usleep(80000); //pause execution for 80000 miliseconds or 0.08 seconds. This simulates "flipping" to the next frame in the animation
 
 			}
-
-
-		}
-
-
-		void moveAliens()
-		{
-			//all aliens move at the same speed. Probably sleep the loop
-			//aliens start at the left side of the screen and move right
-			//if aliens reach the border of screen, descend the screen by one and move in the opposite direction
-			int alien_col = alien->getX();
-			int alien_row = alien->getY();
-			int direction = 0; //0 = right, 1 = left
-			srand(1978);
-
-
-			while(alien_row < 29 && alien->getIcon() != ' ')
+			if(a_bolt->getY() > 28)
 			{
-				int shoot = rand() % 2;
-				chtype input = board.getInput();
-
-				//NOTE: SLOW
-				/*
-				if(input == KEY_LEFT)
-					moveShip(left);
-				if(input == KEY_RIGHT)
-					moveShip(right); */
-
-				if(direction == 0) //move right
-				{
-					alien_col += 1;
-				}
-
-				else if(direction == 1) //move left
-				{
-					alien_col -= 1;
-				}
-
-				if(alien_col > 73)
-				{
-					alien_col -= 1;
-					alien_row += 1;
-					direction = 1;
-				}
-
-				if(alien_col < 1)
-				{
-					alien_col += 1;
-					alien_row += 1;
-					direction = 0;
-				}
-
-				if(shoot == 1)
-					moveAlienBolt();
-
-				board.addAt(alien->getY(), alien->getX(), ' ');
-				createAlien(alien_row, alien_col, 'A');
-				board.refresh();
-				usleep(800000);
+				board.addAt(a_bolt->getY(), a_bolt->getX(), ' ');
 			}
 
 
 		}
-
-
-
 
 };
