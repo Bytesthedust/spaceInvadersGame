@@ -11,10 +11,9 @@
 class Alien: public Drawable
 {
 
-	Alien* next;
-	int value;
 
-	public: 
+	public:
+       		Alien* next;
 
 		Alien(int y, int x, chtype icon)
 		{
@@ -23,34 +22,48 @@ class Alien: public Drawable
 			this->icon = icon;
 			next = NULL;
 
-			switch(icon)
-			{
-				case 'A':
-					this->value = 40;
-					break;
-				case 'O':
-					this->value = 30;
-					break;
-				case 'G':
-					this->value = 20;
-					break;
-				case 'X':
-					this->value = 10;
-					break;
-				default:
-					this->value = 0;
-					break;
-			}
-
 		}
 
 		//get alien value
-		int getValue()
+		int getValue(chtype ahead)
 		{
-			return value;
+			if(ahead == 'A')
+				return 40;
+			else if(ahead == 'O')
+				return 30;
+			else if(ahead == 'G')
+				return 20;
+			else if(ahead == 'X')
+				return 10;
+
+			return 0;
 		}
 
+
 		//push function
+		void push(int y, int x, chtype icon, Alien** head)
+		{
+			Alien* newAlien = new Alien(y, x, icon);
+			Alien* temp = *head;
+
+			newAlien->next = NULL;
+
+			if(*head == NULL)
+			{
+				*head = newAlien;
+				return;
+			}
+
+			while(temp->next != NULL)
+			{
+				temp = temp->next;
+			}
+
+			temp->next = newAlien;
+			return;
+		}
 
 };
+
+
 
