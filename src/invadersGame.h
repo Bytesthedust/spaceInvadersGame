@@ -66,13 +66,12 @@ class invadersGame
 
 			//create aliens
 			createAlien(3, 6, 'A'); //first row
-			createAlien(5, 6, 'O'); //second row
-			createAlien(7, 6, 'G'); //third row
-			createAlien(9, 6, 'X'); //fourth row
+			//createAlien(5, 6, 'O'); //second row
+			//createAlien(7, 6, 'G'); //third row
+			//createAlien(9, 6, 'X'); //fourth row
 
-
-			displayAliens(&alien);
-			//moveAlien(); //begin alien movement
+			displayAliens(alien);
+			moveAlien(alien); //begin alien movement
 
 		}
 
@@ -158,7 +157,7 @@ class invadersGame
 		Ship* ship = NULL; //class for ship 
 		Empty* space; //class for empty space
 		Bolt* bolt = NULL; //class for bullet
-		Bolt* a_bolt = NULL; //class for alien bullet
+		Bolt* bomb = NULL; //class for alien bullet
 		Shield* shield = NULL; //class for shield object
 		
 		Alien* alien = NULL;
@@ -176,9 +175,11 @@ class invadersGame
 		{
 
 			int rowLimit = x + 6;
+
 			for(x; x < rowLimit; ++x)
 			{
-				alien->push(y,x,icon,&alien);
+
+				alien = alien->addEnd(alien,y,x*2,icon);
 			}
 
 		}
@@ -198,8 +199,8 @@ class invadersGame
 		
 		void createAlienBolt(int y, int x)
 		{
-			a_bolt = new Bolt(y,x);
-			board.add(*a_bolt);
+			bomb = new Bolt(y,x);
+			board.add(*bomb);
 		}
 		
 		//function to create 2 rows of shields
@@ -229,18 +230,15 @@ class invadersGame
 			board.refresh();
 		}
 
-		void displayAliens(Alien** head)
+		void displayAliens(Alien* head)
 		{
-			Alien* temp = *head;
-			while(temp->next != NULL)
+			Alien* temp = head;
+			do
 			{
 				board.add(*temp);
 				board.refresh();
 				temp = temp->next;
-			}
-
-			board.add(*temp);
-			board.refresh();
+			} while(temp != head);
 		}
 
 	
@@ -370,21 +368,38 @@ class invadersGame
 		}
 		
 		//handles all mechanics for alien enemies
-		void moveAlien()
+		//1: get current coordinate of alien
+		//2: while y coordinate is less than bottom
+		
+		void moveAlien(Alien* head)
 		{
 			//get position of alien
-			int alien_col = alien->getX();
-			int alien_row = alien->getY();
-			int direction = 0; //flag to determine alien direction
 			
-			srand(time(0)); //seed for shoot variable random value
+			Alien* temp = head;
 
-			int shoot; // flag for shooting
+			int alien_col;
+			int alien_row;
+
+			int direction = 0; //flag to determine alien direction
+		
+
+			//srand(time(0)); //seed for shoot variable random value
+
+			//int shoot; // flag for shooting
 			
 			//begin movement
-			while(alien_row < 29)
+
+			//1: traverse through aliens and update positions
+			//2: if temp = head, refresh the board and continue loop
+			//shoot condition: an alien can fire a bomb only if there is no alien underneath it
+			while(true)
 			{
-				shoot = rand() % 2;
+				processInput(); //allow player movement
+				alien_col = temp->getX();
+				alien_row = temp->getY();
+
+				board.addAt(alien_row, alien_col, ' ');
+
 				//implement player movement
 
 				if(direction ==  0) //move right
@@ -395,11 +410,14 @@ class invadersGame
 						alien_col -= 1;
 						alien_row += 1;
 						direction = 1;
+						temp->setY(alien_row);
 					}
 
+					temp->setX(alien_col);
+
 					//add shoot mechanic
-					if(shoot == 1)
-						moveAlienBolt();
+					//if(shoot == 1 )
+					//	moveAlienBolt();
 				}
 
 				else if(direction == 1) // move left
@@ -410,32 +428,47 @@ class invadersGame
 						alien_col += 1;
 						alien_row += 1;
 						direction = 0;
+
+						temp->setY(alien_row);
 					}
 
+					temp->setX(alien_col);
+
+
 					//add shoot mechanic
-					if(shoot == 1)
-						moveAlienBolt();
+					//if(shoot == 1)
+					//	moveAlienBolt();
 				}
 
-				//animation
-				board.addAt(alien->getY(), alien->getX(), ' ');
-				createAlien(alien_row, alien_col, 'A'); //change to get icon of alien
-				board.refresh();
-				usleep(800000);
 
+
+				board.add(*temp);
+				temp = temp->next;
+
+				
+				if(temp == head)
+					//board.addAt(temp->getY(), temp->getX(), ' ');
+					board.refresh();
+
+				usleep(80000);
 
 			}
 
 
+
 		}
 
+
+
+
+		
 		void moveAlienBolt()
 		{
 			//get the coordinates of the bolt
 			createAlienBolt(alien->getY()+1, alien->getX());
 
-			int bolt_col = a_bolt->getX();
-			int next_y = a_bolt->getY();
+			int bolt_col = bomb->getX();
+			int next_y = bomb->getY();
 
 
 			//animating bolt movement
@@ -444,13 +477,12 @@ class invadersGame
 				chtype ahead = board.getCharAt(next_y, bolt_col); //detect incoming sprite
 				chtype input = board.getInput();
 
-				/*
+				
 				//allows movement during bolt travel
 				if(input == KEY_LEFT)
 					moveShip(left);
 				if(input == KEY_RIGHT)
 					moveShip(right);
-					*/
 
 				//processInput();
 
@@ -460,16 +492,16 @@ class invadersGame
 				//if bolt hits shield
 				if(ahead == '#')
 				{
-					destroySprite(a_bolt->getY(), a_bolt->getX(), next_y);
-					delete(a_bolt);
+					destroySprite(bomb->getY(), bomb->getX(), next_y);
+					delete(bomb);
 					break;
 				}
 
 				//if bolt hits player
 				else if(ahead == '^')//NOTE: Crash occurs
 				{
-					board.addAt(a_bolt->getY(), a_bolt->getX(), ' ');
-					delete(a_bolt);
+					board.addAt(bomb->getY(), bomb->getX(), ' ');
+					delete(bomb);
 					shipHit();
 					break;
 				}
@@ -478,8 +510,8 @@ class invadersGame
 				{
 
 					//else bolt continues to the border
-					board.addAt(a_bolt->getY(), a_bolt->getX(), ' '); //create an empty space in the bolt old position
-					delete(a_bolt); //memory management of bolt	
+					board.addAt(bomb->getY(), bomb->getX(), ' '); //create an empty space in the bolt old position
+					delete(bomb); //memory management of bolt	
 					createAlienBolt(next_y, bolt_col); //create a new bolt given the updated coordinates
 				
 				}
@@ -487,9 +519,9 @@ class invadersGame
 				usleep(80000); //pause execution for 80000 miliseconds or 0.08 seconds. This simulates "flipping" to the next frame in the animation
 
 			}
-			if(a_bolt->getY() > 28)
+			if(bomb->getY() > 28)
 			{
-				board.addAt(a_bolt->getY(), a_bolt->getX(), ' ');
+				board.addAt(bomb->getY(), bomb->getX(), ' ');
 			}
 
 
