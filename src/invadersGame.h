@@ -112,7 +112,8 @@ class invadersGame
 
 		void updateState()
 		{
-			//logic for animation
+			//logic for animation->update positions for sprites at the same time + usleep in main loop
+			//60 fps => 1000/fps = 16.6 fpms
  
 		}
 
@@ -174,7 +175,7 @@ class invadersGame
 		void createAlien(int y, int x, chtype icon)
 		{
 
-			int rowLimit = x + 6;
+			int rowLimit = x + 10;
 
 			for(x; x < rowLimit; ++x)
 			{
@@ -300,8 +301,16 @@ class invadersGame
 		
 		}
 
+		void destroyAlien(Alien* target, Bolt* bullet)
+		{
+			Alien* temp = target;
+			while(temp->getY() != bullet->getY() && temp->getX() != bullet->getX())
+				temp = temp->next;
 
-		
+			temp->setIcon(' ');
+			target->deleteAlien(&temp, ' ');
+
+		}
 
 		//BUG: when bolt fires, freezes ship in place
 		void moveBolt()
@@ -340,6 +349,7 @@ class invadersGame
 					destroySprite(bolt->getY(), bolt->getX(), next_y);
 					score += alien->getValue(ahead);
 					scoreboard.updateScore(score);
+					destroyAlien(alien, bolt);
 					delete(bolt);
 					break;
 				}
@@ -367,90 +377,71 @@ class invadersGame
 
 		}
 		
-		//handles all mechanics for alien enemies
-		//1: get current coordinate of alien
-		//2: while y coordinate is less than bottom
 		
+		//function for enemy movement
 		void moveAlien(Alien* head)
 		{
-			//get position of alien
 			
 			Alien* temp = head;
 
-			int alien_col;
-			int alien_row;
 
 			int direction = 0; //flag to determine alien direction
-		
+			int shift = 0; //flag to determine if aliens need to be moved down
+			int shoot; //flag for shooting
 
 			//srand(time(0)); //seed for shoot variable random value
-
-			//int shoot; // flag for shooting
 			
 			//begin movement
 
 			//1: traverse through aliens and update positions
 			//2: if temp = head, refresh the board and continue loop
 			//shoot condition: an alien can fire a bomb only if there is no alien underneath it
+
 			while(true)
 			{
 				processInput(); //allow player movement
-				alien_col = temp->getX();
-				alien_row = temp->getY();
 
-				board.addAt(alien_row, alien_col, ' ');
+				board.addAt(temp->getY(), temp->getX(), ' ');
 
 				//implement player movement
 
-				if(direction ==  0) //move right
+				if(temp == head)
+					shift = 0;
+					board.refresh();
+
+				if(direction == 0 && shift == 0) //move right
 				{
-					alien_col += 1;
-					if(alien_col > 73)
-					{
-						alien_col -= 1;
-						alien_row += 1;
-						direction = 1;
-						temp->setY(alien_row);
-					}
-
-					temp->setX(alien_col);
-
-					//add shoot mechanic
-					//if(shoot == 1 )
-					//	moveAlienBolt();
+					temp->alienLeft();
 				}
 
-				else if(direction == 1) // move left
+				if(direction == 1 && shift == 0) // move left
 				{
-					alien_col -= 1;
-					if(alien_col < 1)
-					{
-						alien_col += 1;
-						alien_row += 1;
-						direction = 0;
-
-						temp->setY(alien_row);
-					}
-
-					temp->setX(alien_col);
-
-
-					//add shoot mechanic
-					//if(shoot == 1)
-					//	moveAlienBolt();
+					temp->alienRight();
 				}
 
+				if(temp->getX() < 2)
+				{
+					direction = 0;
+					shift = 1;
+				}
+
+				if(temp->getX() > 72)
+				{
+					direction = 1;
+
+					shift = 1;
+				}
+
+				if(shift == 1)
+				{
+					temp->alienDown();
+				}
 
 
 				board.add(*temp);
 				temp = temp->next;
 
-				
-				if(temp == head)
-					//board.addAt(temp->getY(), temp->getX(), ' ');
-					board.refresh();
-
-				usleep(80000);
+				usleep(1000);
 
 			}
 
